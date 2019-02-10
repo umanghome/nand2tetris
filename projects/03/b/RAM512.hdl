@@ -15,5 +15,29 @@ CHIP RAM512 {
     OUT out[16];
 
     PARTS:
-    // Put your code here:
+    // Select which RAM to use
+    DMux8Way    (in=true, sel=address[6..8], a=da, b=db, c=dc, d=dd, e=de, f=df, g=dg, h=dh);
+    
+    // Get load signals for each RAM
+    And         (a=load, b=da, out=ada);
+    And         (a=load, b=db, out=adb);
+    And         (a=load, b=dc, out=adc);
+    And         (a=load, b=dd, out=add);
+    And         (a=load, b=de, out=ade);
+    And         (a=load, b=df, out=adf);
+    And         (a=load, b=dg, out=adg);
+    And         (a=load, b=dh, out=adh);
+
+    // Declare RAMs
+    RAM64       (in=in, load=ada, address=address[0..5], out=a);
+    RAM64       (in=in, load=adb, address=address[0..5], out=b);
+    RAM64       (in=in, load=adc, address=address[0..5], out=c);
+    RAM64       (in=in, load=add, address=address[0..5], out=d);
+    RAM64       (in=in, load=ade, address=address[0..5], out=e);
+    RAM64       (in=in, load=adf, address=address[0..5], out=f);
+    RAM64       (in=in, load=adg, address=address[0..5], out=g);
+    RAM64       (in=in, load=adh, address=address[0..5], out=h);
+
+    // Set output
+    Mux8Way16   (a=a, b=b, c=c, d=d, e=e, f=f, g=g, h=h, sel=address[6..8], out=out);
 }

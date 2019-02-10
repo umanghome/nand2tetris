@@ -15,5 +15,21 @@ CHIP RAM16K {
     OUT out[16];
 
     PARTS:
-    // Put your code here:
+    // Select which RAM to use
+    DMux4Way    (in=true, sel=address[12..13], a=da, b=db, c=dc, d=dd);
+
+    // Get load signals for each RAM
+    And         (a=load, b=da, out=ada);
+    And         (a=load, b=db, out=adb);
+    And         (a=load, b=dc, out=adc);
+    And         (a=load, b=dd, out=add);
+
+    // Declare RAMs
+    RAM4K   (in=in, load=ada, address=address[0..11], out=a);
+    RAM4K   (in=in, load=adb, address=address[0..11], out=b);
+    RAM4K   (in=in, load=adc, address=address[0..11], out=c);
+    RAM4K   (in=in, load=add, address=address[0..11], out=d);
+
+    // Set output
+    Mux4Way16   (a=a, b=b, c=c, d=d, sel=address[12..13], out=out);   
 }

@@ -15,5 +15,27 @@ CHIP RAM8 {
     OUT out[16];
 
     PARTS:
-    // Put your code here:
+    // Figure out which register to set
+    DMux8Way    (in=true, sel=address, a=da, b=db, c=dc, d=dd, e=de, f=df, g=dg, h=dh);
+    And         (a=load, b=da, out=ada);
+    And         (a=load, b=db, out=adb);
+    And         (a=load, b=dc, out=adc);
+    And         (a=load, b=dd, out=add);
+    And         (a=load, b=de, out=ade);
+    And         (a=load, b=df, out=adf);
+    And         (a=load, b=dg, out=adg);
+    And         (a=load, b=dh, out=adh);
+
+    // Declare registers
+    Register    (in=in, load=ada, out=a);
+    Register    (in=in, load=adb, out=b);
+    Register    (in=in, load=adc, out=c);
+    Register    (in=in, load=add, out=d);
+    Register    (in=in, load=ade, out=e);
+    Register    (in=in, load=adf, out=f);
+    Register    (in=in, load=adg, out=g);
+    Register    (in=in, load=adh, out=h);
+    
+    // Set out
+    Mux8Way16   (a=a, b=b, c=c, d=d, e=e, f=f, g=g, h=h, sel=address, out=out);
 }

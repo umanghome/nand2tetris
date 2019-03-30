@@ -19,5 +19,16 @@ CHIP Computer {
     IN reset;
 
     PARTS:
-    // Put your code here:
+
+    // The ROM takes an address (Program Counter) and returns the instruction,
+    ROM32K  (address=pc, out=instruction);
+
+    // We pass the instruction, value of M (=RAM[A]), reset to the CPU.
+    // And we get an output to be fed into the memory, the memory address, whether or not to write into memory, and the updated program counter.
+    CPU     (inM=memoryOut, instruction=instruction, reset=reset, outM=outM, writeM=writeM, addressM=addressM, pc=pc);
+
+    // The Memory takes in the address, the value, and whether or not to write.
+    // If writing, it returns the new value of RAM[A],
+    // Otherwise, it returns the existing value of RAM[A].
+    Memory  (in=outM, load=writeM, address=addressM, out=memoryOut);
 }

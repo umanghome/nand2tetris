@@ -39,5 +39,57 @@ CHIP CPU {
         pc[15];          // address of next instruction
 
     PARTS:
-    // Put your code here:
+    
+    // Get type of instruction
+    Not     (in=instruction[15], out=isInstructionA);
+    Not     (in=isInstructionA, out=isInstructionC);
+
+    // If it's a C-instruction and the bit for A-register is 1, we are picking the ALU output from the previous cycle.
+    // Otherwise, we pick the instruction.
+    And     (a=isInstructionC, b=instruction[5], out=isInstructionCAndDestinationA);
+    Mux16   (a=instruction, b=feedback, sel=isInstructionCAndDestinationA, out=registerAInput);
+
+    // If it's an A-instruction or C-instruction for which the bit for A-register is 1, we load the A register.
+    Or      (a=isInstructionA, b=isInstructionCAndDestinationA, out=shouldLoadRegisterA);
+    ARegister(in=registerAInput, load=shouldLoadRegisterA, out=registerAOutput); // "A" register
+
+    // Check if we're supposed to be using the M-register for input.
+    // If we are, use that. Otherwise use the output of A-register.
+    Mux16   (a=registerAOutput, b=inM, sel=instruction[12], out=registerMOutput); // "M" register in our Hack assembly
+
+    // We should load the D register if it's a C-instruction and the bit for D-register is 1.
+    And     (a=isInstructionC, b=instruction[4], out=shouldLoadRegisterD);
+    DRegister(in=feedback, load=shouldLoadRegisterD, out=registerDOutput); // "D" register
+
+    // ALU-stuff.
+    ALU     (x=registerDOutput, y=registerMOutput, zx=instruction[11], nx=instruction[10], zy=instruction[9], ny=instruction[8], f=instruction[7], no=instruction[6], out=outM, out=feedback, zr=outputZero, ng=outputNegative);
+    
+    // Get a variable for when output is positive.
+    Not     (in=outputZero, out=outputNonZero);
+    Not     (in=outputNegative, out=outputNonNegative);
+    And     (a=outputNonZero, b=outputNonNegative, out=outputPositive);
+
+    // Jump calculation
+    And     (a=instruction[2], b=outputNegative, out=jumpBitThree); // j1=1 && ng=1
+    And     (a=instruction[1], b=outputZero, out=jumpBitTwo); // j2=1 && zr=1
+    And     (a=instruction[0], b=outputPositive, out=jumpBitOne); // j3=1 && zr=0 && ng=0
+
+    // Calculate if any of the jump is true
+    Or      (a=jumpBitOne, b=jumpBitTwo, out=jumpBitIntermediateResult);
+    Or      (a=jumpBitIntermediateResult, b=jumpBitThree, out=shouldJump);
+
+    // We only load PC (jump) in case of C instructions
+    And     (a=isInstructionC, b=shouldJump, out=loadProgramCounter);
+
+    // If we're not loading PC, we're incrementing PC
+    Not     (in=loadProgramCounter, out=incrementProgramCounter);
+
+    // We write to M if it's a C-instruction and the M-register bit is 1
+    And     (a=isInstructionC, b=instruction[3], out=writeM);
+
+    // Do PC-stuff
+    PC      (in=registerAOutput, load=loadProgramCounter, inc=incrementProgramCounter, reset=reset, out[0..14]=pc); // Program Counter unit
+
+    // Remove MSB from A-register's output and set it as addressM
+    Or16     (a=false, b=registerAOutput, out[0..14]=addressM);
 }

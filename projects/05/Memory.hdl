@@ -27,5 +27,23 @@ CHIP Memory {
     OUT out[16];
 
     PARTS:
-    // Put your code here:
+    // 00 and 01 go to RAM
+    // 10 goes to SCREEN
+    // 11 goes to KBD
+    DMux4Way    (in=load, sel=address[13..14], a=ram1, b=ram2, c=screen, d=keyboard);
+
+    // Decide if we should use RAM
+    Or          (a=ram1, b=ram2, out=ram); // ram1 and ram2 both mean that we need to use the main RAM
+
+    // RAM-stuff
+    RAM16K      (in=in, load=ram, address=address[0..13], out=ramOut);
+
+    // SCREEN-stuff
+    Screen      (in=in, load=screen, address=address[0..12], out=screenOut);
+
+    // KBD-stuff
+    Keyboard    (out=keyboardOut);
+
+    // Send the output. RAM is used for both a and b because it takes up 00 and 01 of the two MSBs.
+    Mux4Way16   (a=ramOut, b=ramOut, c=screenOut,d=keyboardOut, sel=address[13..14], out=out);
 }
